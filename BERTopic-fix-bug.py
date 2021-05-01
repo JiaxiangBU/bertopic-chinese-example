@@ -40,7 +40,7 @@ input_list = df['pair_l']
 
 # + id="hlxNa-jdRhvo"
 from sentence_transformers import SentenceTransformer
-model = SentenceTransformer('distilroberta-fine-tuned/') # use 'paraphrase-distilroberta-base-v1'
+model = SentenceTransformer('paraphrase-distilroberta-base-v1')
 
 # + colab={"base_uri": "https://localhost:8080/"} id="WWBxMKOFUNiS" outputId="02b391ab-5d8c-4c2d-be13-e8b15d55fd14"
 # # !pip install bertopic
@@ -52,11 +52,21 @@ model = SentenceTransformer('distilroberta-fine-tuned/') # use 'paraphrase-disti
 # https://stackoverflow.com/questions/65816675/cannot-import-name-delayed-from-sklearn-utils-fixes
 # # !pip install delayed
 
+# +
+from sklearn.feature_extraction.text import CountVectorizer
+import jieba
+
+def tokenize_zh(text):
+    words = jieba.lcut(text)
+    return words
+
+vectorizer = CountVectorizer(tokenizer=tokenize_zh)
+
 # + id="uCzhbj9MULhG"
 from bertopic import BERTopic
 
 # + id="KGao5whzT3ky"
-topic_model = BERTopic(embedding_model=model)
+topic_model = BERTopic(embedding_model=model, verbose=True, vectorizer_model=vectorizer)
 
 # + id="jAW4HAL5UVwm"
 docs = input_list.tolist()
@@ -72,7 +82,6 @@ embedding_df = pd.DataFrame(embeddings)
 embedding_df.head()
 
 # + id="W-0olgxKUIGs"
-topic_model = BERTopic()
 # ipdb.set_trace()
 topics, _ = topic_model.fit_transform(docs[:1000],embeddings=embedding_df.iloc[:1000,].values)
 # 20k数据，就很慢了。
@@ -87,7 +96,3 @@ import numpy as np
 
 np.any(embedding_df.iloc[:100,].isin([np.nan, np.inf, -np.inf])), \
 np.any(pd.Series(docs[:100]).isin([np.nan, np.inf, -np.inf,""," "])), \
-
-embedding_df.shape,len(docs)
-
-
